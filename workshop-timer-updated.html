@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer pour Atelier</title>
+    <style>
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background-color: #002d62;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        #timer {
+            font-size: 8rem;
+            margin-bottom: 2rem;
+            transition: color 0.3s ease;
+            color: #78be21;
+            color: #78be21;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .time-button {
+            font-family: 'Arial Black', sans-serif;
+            background-color: #FFFFFF;
+            color: #002d62;
+            border: 3px solid #FFFFFF;
+            border-radius: 2rem;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .time-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .time-button.active {
+            background-color: #78be21;
+            color: #FFFFFF;
+            border-color: #78be21;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-button {
+            font-family: 'Arial Black', sans-serif;
+            background-color: #FFFFFF;
+            color: #002d62;
+            border: 3px solid #FFFFFF;
+            border-radius: 2rem;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 0 0.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .control-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="start-stop" class="control-button">Start</button>
+        <button id="reset" class="control-button">Reset</button>
+    </div>
+    
+    <div id="timer">00:00</div>
+    
+    <div class="button-group">
+        <button class="time-button active" data-time="75">1 min 15</button>
+        <button class="time-button" data-time="180">3 min</button>
+        <button class="time-button" data-time="300">5 min</button>
+    </div>
+    
+    <script>
+        const timerDisplay = document.getElementById('timer');
+        const startStopBtn = document.getElementById('start-stop');
+        const resetBtn = document.getElementById('reset');
+        const timeButtons = document.querySelectorAll('.time-button');
+        
+        let countdown;
+        let timeInSeconds = 75; // Défaut: 1 min 15 sec
+        let isRunning = false;
+        let isCountingUp = false;
+        
+        // Sélectionner la durée
+        timeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (!isRunning) {
+                    timeButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    timeInSeconds = parseInt(button.dataset.time);
+                    displayTime(timeInSeconds);
+                    isCountingUp = false;
+                    timerDisplay.style.color = '#78be21'; // Vert en descendant
+                }
+            });
+        });
+        
+        // Formater le temps
+        function displayTime(seconds) {
+            const mins = Math.floor(Math.abs(seconds) / 60);
+            const secs = Math.abs(seconds) % 60;
+            
+            if (isCountingUp) {
+                timerDisplay.textContent = `-${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            } else {
+                timerDisplay.textContent = `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+        }
+        
+        // Démarrer/Arrêter le timer
+        startStopBtn.addEventListener('click', () => {
+            if (isRunning) {
+                clearInterval(countdown);
+                startStopBtn.textContent = 'Start';
+                isRunning = false;
+            } else {
+                if (isCountingUp) {
+                    startCountUp();
+                } else {
+                    startCountDown();
+                }
+                startStopBtn.textContent = 'Pause';
+                isRunning = true;
+            }
+        });
+        
+        // Réinitialiser le timer
+        resetBtn.addEventListener('click', () => {
+            clearInterval(countdown);
+            isCountingUp = false;
+            // Récupérer la valeur active
+            const activeButton = document.querySelector('.time-button.active');
+            timeInSeconds = parseInt(activeButton.dataset.time);
+            displayTime(timeInSeconds);
+            timerDisplay.style.color = '#78be21'; // Revenir à la couleur verte
+            startStopBtn.textContent = 'Start';
+            isRunning = false;
+        });
+        
+        // Fonction compte à rebours
+        function startCountDown() {
+            displayTime(timeInSeconds);
+            timerDisplay.style.color = '#78be21'; // Vert pour le compte à rebours
+            
+            countdown = setInterval(() => {
+                timeInSeconds--;
+                displayTime(timeInSeconds);
+                
+                if (timeInSeconds <= 0) {
+                    // Basculer automatiquement vers le chronomètre
+                    isCountingUp = true;
+                    timeInSeconds = 0;
+                    timerDisplay.style.color = '#ea4335'; // Rouge pour le chronomètre
+                    displayTime(timeInSeconds); // Afficher avec le signe -
+                    startCountUp();
+                }
+            }, 1000);
+        }
+        
+        // Fonction chronomètre
+        function startCountUp() {
+            timerDisplay.style.color = '#ea4335'; // Rouge pour le chronomètre
+            
+            clearInterval(countdown); // Pour éviter les doublons
+            countdown = setInterval(() => {
+                timeInSeconds++;
+                displayTime(timeInSeconds);
+                
+                // Limite de 10 minutes
+                if (timeInSeconds >= 600) {
+                    clearInterval(countdown);
+                    startStopBtn.textContent = 'Start';
+                    isRunning = false;
+                }
+            }, 1000);
+        }
+        
+        // Initialiser l'affichage
+        displayTime(timeInSeconds);
+    </script>
+</body>
+</html>
